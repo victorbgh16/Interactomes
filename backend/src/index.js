@@ -8,6 +8,7 @@ import uploadsRoutes from './routes/upload.js';
 import organellesRoutes from './routes/organelles.js';
 import datasetsRoutes from './routes/datasets.js';
 import crosslinksRoutes from './routes/crosslinks.js';
+import sequelize from './database/config.js';
 
 const app = express();
 
@@ -30,7 +31,7 @@ app.use(cors({
     origin(origin, cb) {
         // Autorise curl / health (sans Origin) et locaux
         if (!origin) return cb(null, true);
-        const allowed = [ORIGIN, 'http://127.0.0.1:5173'];
+        const allowed = [ORIGIN, 'http://127.0.0.1:5173', 'http://localhost:5173'];
         return allowed.includes(origin) ? cb(null, true)
             : cb(new Error('Origin not allowed: ' + origin));
     },
@@ -53,6 +54,24 @@ app.use(express.urlencoded({ extended: true }));
 
 import './database/initDB.js';
 import './models/index.js';
+
+import { QueryTypes } from 'sequelize'; // Import QueryTypes if using ES modules
+
+app.get('/api-test-db', async (req, res) => {
+    try {
+        // Option A: Official Sequelize connection test
+        await sequelize.authenticate();
+
+        // Option B: Raw query with QueryTypes.SELECT
+        const results = await sequelize.query('SELECT 1 + 1 AS result', {
+            type: QueryTypes.SELECT
+        });
+
+        return res.json({ ok: true, message: 'DB Connected successfully!', results });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
 
 app.use('/auth', authRoutes);
 app.use('/organelles', organellesRoutes);

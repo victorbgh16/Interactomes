@@ -7,9 +7,18 @@ const sequelize = new Sequelize(
     process.env.DB_USER,
     process.env.DB_PASSWORD,
     {
-        host: process.env.DB_HOST,
+        host: process.env.DB_HOST || '127.0.0.1',
         port: process.env.DB_PORT || 3306,
         dialect: 'mariadb',
+        dialectOptions: {
+            connectTimeout: 5000
+        },
+        pool: {
+            max: 10,
+            min: 0,
+            acquire: 5000,
+            idle: 10000
+        },
         logging: false,
     }
 );

@@ -7,7 +7,7 @@ const router = express.Router();
 
 function signToken(u) {
     if (!process.env.JWT_SECRET) {
-        throw new Error('JWT_SECRET manquant');
+        throw new Error('JWT_SECRET missing');
     }
     return jwt.sign({ id: u.id, email: u.email }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRES_IN || '7d'
@@ -21,14 +21,20 @@ router.post('/register', async (req, res) => {
         if (!email || !first_name || !last_name || !password) {
             return res.status(400).json({ error: 'Required fields are missing' });
         }
+        console.log('Checking if user exists...');
         const exist = await User.findOne({ where: { email } });
+        console.log('User lookup finished with result: ', exist ? 'Found' : 'Not found');
+
         if (exist) return res.status(409).json({ error: 'Email already in use' });
 
         const password_hash = await bcrypt.hash(password, 12);
+        
+        console.log('Creating user in DB...');
         const user = await User.create({
             email, first_name, last_name, password_hash,
             created_at: new Date(), updated_at: new Date()
         });
+        console.log('User created successfully.')
 
         const token = signToken(user);
         res.status(201).json({
@@ -40,7 +46,7 @@ router.post('/register', async (req, res) => {
         });
     } catch (e) {
         console.error('POST /auth/register ERROR:', e);
-        return res.status(500).json({ error: 'Erreur serveur' });
+        return res.status(500).json({ error: 'Server Error' });
     }
 });
 
@@ -80,7 +86,7 @@ router.post('/login', async (req, res) => {
         });
     } catch {
         console.error('POST /auth/login ERROR:', e);
-        return res.status(500).json({ error: 'Server error' });
+        return res.status(500).json({ error: 'Server Error' });
     }
 });
 

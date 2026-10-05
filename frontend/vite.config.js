@@ -12,6 +12,13 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    proxy: {
+      // Forward any request starting with /auth or /api to the backend
+      '/auth': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+    },
     strictPort: true,
     allowedHosts: ['interactomes.scicore.unibas.ch'],
     hmr: false,

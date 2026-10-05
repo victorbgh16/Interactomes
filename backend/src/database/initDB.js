@@ -1,6 +1,19 @@
 // src/database/initDB.js
 import sequelize from './config.js';
+import Organelle from '../models/Organelle.js';
 const wait = (ms)=>new Promise(r=>setTimeout(r,ms));
+
+const DEFAULT_ORGANELLES = [
+  'Cilia', 'Mitochondrion', 'Chloroplast', 'Nucleus',
+  'Peroxisome', 'Golgi apparatus', 'Lysosome', 
+  'Endoplasmic reticulum', 'Vacuole', 'Cytosol', 'allCell'
+];
+
+export async function seedOrganelles() {
+  const records = DEFAULT_ORGANELLES.map(name => ({ name }));
+  await Organelle.bulkCreate(records, { ignoreDuplicates: true });
+  console.log('🌱 Organelles seeded');
+}
 
 (async () => {
     for (let i=1;i<=20;i++){
@@ -10,6 +23,7 @@ const wait = (ms)=>new Promise(r=>setTimeout(r,ms));
             await sequelize.authenticate();
             console.log('✅ DB connected');
             await sequelize.sync({ alter: true });
+            await seedOrganelles();
             console.log('✅ Tables synced');
             return;
         } catch (e) {

@@ -7,7 +7,7 @@
       <span class="muted">{{ flatCount }} dataset(s)</span>
     </div>
 
-    <div v-if="loading" class="muted">Chargement…</div>
+    <div v-if="loading" class="muted">Loading...</div>
     <div v-else-if="err" class="error">{{ err }}</div>
     <div v-else>
       <div v-for="u in grouped" :key="u.user.id" class="user-block">
@@ -32,10 +32,10 @@
                   <div class="meta">
                     <span>Rows: <b>{{ d.rows_count ?? 0 }}</b></span>
                     <span>Status: <b>{{ d.status }}</b></span>
-                    <span>Créé: <b>{{ fmt(d.created_at) }}</b></span>
+                    <span>Created: <b>{{ fmt(d.created_at) }}</b></span>
                   </div>
                 </div>
-                <RouterLink class="go" :to="{ name: 'graph', params: { datasetId: d.id } }">Voir le graphe →</RouterLink>
+                <RouterLink class="go" :to="{ name: 'graph', params: { datasetId: d.id } }">View graph →</RouterLink>
               </li>
             </ul>
           </div>
@@ -43,7 +43,7 @@
 
       </div>
 
-      <div v-if="grouped.length === 0" class="muted">Aucun dataset ne matche le filtre.</div>
+      <div v-if="grouped.length === 0" class="muted">No dataset matches your filter.</div>
     </div>
   </div>
 </template>
@@ -63,7 +63,7 @@ onMounted(async () => {
   try {
     all.value = await fetchAllDatasets();
   } catch (e) {
-    err.value = e?.response?.data?.error || 'Chargement impossible';
+    err.value = e?.response?.data?.error || 'Loading failed';
   } finally {
     loading.value = false;
   }
