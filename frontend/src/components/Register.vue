@@ -7,7 +7,7 @@
       <input v-model="email" type="email" placeholder="Email" required />
       <input v-model="password" type="password" placeholder="Password" required />
       <button :disabled="loading" type="submit">
-        {{ loading ? 'Creation...' : "Sign up" }}
+        {{ loading ? 'Creating...' : "Sign up" }}
       </button>
       <p v-if="err" style="color:#e33">{{ err }}</p>
     </form>

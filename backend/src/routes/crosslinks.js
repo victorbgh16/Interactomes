@@ -37,7 +37,7 @@ router.post('/datasets/:datasetId/crosslinks/import', authRequired, async (req, 
         const { rows } = req.body || {};
 
         if (!Array.isArray(rows) || rows.length === 0) {
-            return res.status(400).json({ error: 'rows empty' });
+            return res.status(400).json({ error: 'Rows empty' });
         }
 
         const ds = await Dataset.findByPk(dataset_id);

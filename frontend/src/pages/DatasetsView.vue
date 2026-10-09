@@ -3,8 +3,8 @@
     <h2>All datasets</h2>
 
     <div class="topbar">
-      <input v-model="q" type="text" placeholder="Filter by name, email, taxon, organelle, filename…" />
-      <span class="muted">{{ flatCount }} dataset(s)</span>
+      <input v-model="q" type="text" placeholder="Search" /> <!-- placeholder="Filter by name, email, taxon, organelle, filename..." -->
+      <span class="muted">{{ flatCount }} {{ flatCount === 1 ? 'dataset' : 'datasets' }}</span>
     </div>
 
     <div v-if="loading" class="muted">Loading...</div>
@@ -19,7 +19,7 @@
         <div v-for="org in u.organisms" :key="org.taxon_id" class="org-block">
           <h4 class="org-title">
             Organism: <b>{{ org.display }}</b>
-            <span class="muted">(taxon {{ org.taxon_id }})</span>
+            <span class="muted"> (taxon ID: {{ org.taxon_id }})</span>
           </h4>
 
           <div v-for="o in org.organelles" :key="o.id" class="organelle-block">
@@ -43,7 +43,7 @@
 
       </div>
 
-      <div v-if="grouped.length === 0" class="muted">No dataset matches your filter.</div>
+      <div v-if="grouped.length === 0" class="muted">No dataset matches your search.</div>
     </div>
   </div>
 </template>

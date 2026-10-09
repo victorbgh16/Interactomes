@@ -3,7 +3,7 @@ import { Organism } from '../models/index.js';
 
 export async function ensureOrganism(orgInfo) {
     if (!orgInfo || typeof orgInfo.tax_id !== 'number') {
-        throw new Error('ensureOrganism: tax_id manquant ou invalide');
+        throw new Error('ensureOrganism: tax_id missing or invalid');
     }
     const taxon_id = orgInfo.tax_id; // 🔑 mapping explicite
 

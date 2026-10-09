@@ -34,7 +34,7 @@
       <p v-if="err" style="color:#e66; margin:0">{{ err }}</p>
 
       <button :disabled="loading || !canSubmit" type="submit">
-        {{ loading ? 'Creation…' : "Sign up" }}
+        {{ loading ? 'Creating...' : "Sign up" }}
       </button>
     </form>
   </Modal>

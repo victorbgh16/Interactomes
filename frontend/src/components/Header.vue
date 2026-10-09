@@ -3,15 +3,15 @@
   <header class="app-header">
     <div class="header-left">
       <!-- LOGO = bouton Accueil -->
-      <RouterLink to="/" class="logo-link" aria-label="Go to home page">
+      <RouterLink to="/" class="logo-link" aria-label="Go to homepage">
         <img src="@/assets/logo/networkLogo.png" alt="Logo Interactomes" class="logo" />
       </RouterLink>
       <h1 class="title">Interactomes</h1>
 
-      <nav class="main-nav" aria-label="Navigation principale">
-        <RouterLink to="/" class="nav-link">Home </RouterLink>
+      <nav class="main-nav" aria-label="Main Navigation">
+        <RouterLink to="/" class="nav-link">Home</RouterLink>
         <RouterLink to="/datasets" class="nav-link">Datasets</RouterLink>
-        <RouterLink v-if="isLoggedIn" to="/upload" class="nav-link cta"> Upload a graph </RouterLink>
+        <RouterLink v-if="isLoggedIn" to="/upload" class="nav-link cta"> Upload New Graph</RouterLink>
       </nav>
     </div>
 
@@ -28,7 +28,7 @@
           class="profile-button"
           aria-haspopup="menu"
           :aria-expanded="menuOpen ? 'true' : 'false'"
-          aria-label="Profil"
+          aria-label="Profile"
           @click="toggleMenu"
           @keydown.escape="closeMenu"
           ref="profileBtnRef"
@@ -51,14 +51,14 @@
             Log in
           </button>
           <button role="menuitem" class="menu-item primary" @click="openRegister">
-            Create an account
+            Sign up
           </button>
         </template>
 
         <!-- Connecté: profil + logout -->
         <template v-else>
           <button role="menuitem" class="menu-item" @click="goProfile">
-            My profile
+            My Account
           </button>
           <button role="menuitem" class="menu-item danger" @click="handleLogout">
             Log out
@@ -103,11 +103,11 @@ function goProfile(){ closeMenu(); router.push('/account') }
 function handleLogout(){ closeMenu(); logout(); router.push('/') }
 
 function fullName(u){
-  if (!u) return 'Utilisateur'
+  if (!u) return 'User'
   const first = u.first_name ?? ''
   const last  = u.last_name   ?? ''
   const name = `${first} ${last}`.trim()
-  return name || u.username || u.email || 'Utilisateur'
+  return name || u.username || u.email || 'User'
 }
 </script>
 

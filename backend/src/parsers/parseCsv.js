@@ -16,7 +16,7 @@ export function parseCsv(filePath) {
     const required = ['Protein1', 'Protein2', 'AbsPos1', 'AbsPos2', 'Score'];
 
     for (const f of required) {
-        if (!headers.includes(f)) console.warn(`Champ manquant : ${f}`);
+        if (!headers.includes(f)) console.warn(`Field missing: ${f}`);
     }
 
     return lines.slice(1).map((line, idx) => {
@@ -31,7 +31,7 @@ export function parseCsv(filePath) {
 
         //Comportement identique : ignorer si Protein1 manquant, sinon fallback Protein2 <- Protein1
         if (!obj.Protein1) {
-            console.warn(`Ligne ${idx + 2} ignorée : champ Protein1 manquant`);
+            console.warn(`Line ${idx + 2} ignored: field Protein1 missing`);
             return null;
         }
         if (!obj.Protein2) {

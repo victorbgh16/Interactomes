@@ -52,7 +52,7 @@ function countUniProt(csvText) {
 
 // --- CLI ---
 if (process.argv.length < 3) {
-    console.error('Usage: node count_uniprot.js <fichier.csv>');
+    console.error('Usage: node count_uniprot.js <file.csv>');
     process.exit(1);
 }
 const path = process.argv[2];

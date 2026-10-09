@@ -98,7 +98,7 @@ async function upsertProteinsForTaxon(accessions, fallbackTaxonId) {
 router.post('/prepare', authRequired, upload.single('file'), async (req, res) => {
     try {
         if (!req.user?.id) return res.status(401).json({ error: 'Auth required' });
-        if (!req.file) return res.status(400).json({ error: 'required file' });
+        if (!req.file) return res.status(400).json({ error: 'File required' });
 
         const organelle_id = Number(req.body?.organelle_id);
         if (!Number.isFinite(organelle_id)) {
@@ -169,7 +169,7 @@ router.post('/commit', authRequired, async (req, res) => {
         }
 
         const csvPath = path.join(uploadDir, `${file_sha256}.csv`);
-        if (!fs.existsSync(csvPath)) return res.status(400).json({ error: 'File not found (re-run prepare)' });
+        if (!fs.existsSync(csvPath)) return res.status(400).json({ error: 'File not found (re-run /prepare)' });
 
 
         // FK présentes ?
@@ -209,7 +209,7 @@ router.post('/commit', authRequired, async (req, res) => {
                 await dataset.save({ silent: true });
             }
         } else {
-            return res.status(400).json({ error: 'invalid mode' });
+            return res.status(400).json({ error: 'Invalid mode' });
         }
 
         // 📥 parse CSV en sécurité

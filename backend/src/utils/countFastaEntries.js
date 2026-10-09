@@ -14,9 +14,9 @@ function countFastaEntries(filePath) {
         const data = fs.readFileSync(filePath, 'utf8');
         const lines = data.split('\n');
         const count = lines.filter(line => line.startsWith('>')).length;
-        console.log(`Nombre d'entrées : ${count}`);
+        console.log(`Number of entries: ${count}`);
     } catch (err) {
-        console.error('Erreur lors de la lecture du fichier :', err.message);
+        console.error('Error reading file:', err.message);
     }
 }
 

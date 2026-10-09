@@ -22,7 +22,7 @@
             <span class="legend-color inter"></span> Interprotein
           </div>
           <div class="legend-item">
-            <span class="legend-color both"></span> Intra + Inter
+            <span class="legend-color both"></span> Intraprotein & Interprotein
           </div>
         </div>
       </li>
@@ -31,7 +31,7 @@
       <li><strong>Number of unique crosslinks: </strong> {{ crosslinkStats.uniqueCount }}</li>
       <li class="crosslink-sub">- Intra-protein Crosslinks: {{ crosslinkStats.intraCount }}</li>
       <li class="crosslink-sub">- Inter-protein Crosslinks: {{ crosslinkStats.interCount }}</li>
-      <li><strong>Number of Crosslinks with copy:</strong> {{ crosslinkStats.crosslinkCount }}</li>
+      <li><strong>Number of non-unique crosslinks:</strong> {{ crosslinkStats.crosslinkCount }}</li>
 
       <!-- Gene Ontology -->
       <li v-if="parsedGOTerms.length" class="go-section">
@@ -96,7 +96,7 @@
 
       <!-- Subcellular locations -->
       <li v-if="parsedSubLoc.length" class="sl-section">
-        <h4 class="go-title">Subcellular locations</h4>
+        <h4 class="go-title">Subcellular Locations</h4>
 
       <!-- résumé par catégorie -->
       <div class="sl-summary">

@@ -1,7 +1,7 @@
 <template>
   <div class="modal-backdrop" @click.self="$emit('close')">
     <div class="modal-panel">
-      <button class="modal-close" @click="$emit('close')" aria-label="Fermer">×</button>
+      <button class="modal-close" @click="$emit('close')" aria-label="Close">×</button>
       <slot />
     </div>
   </div>

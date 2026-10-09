@@ -16,12 +16,13 @@ const routes = [
         component: HomePage
     },
     {
-        name: 'account',
         path: '/account',
+        name: 'account',
         component: AccountPage,
         beforeEnter: requireAuth
     },
-    { path: '/upload',
+    { 
+        path: '/upload',
         name: 'upload',
         component: UploadPage,
         beforeEnter: requireAuth

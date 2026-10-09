@@ -234,7 +234,7 @@ async function commit() {
   okMsg.value = '';
   errCommit.value = '';
   progress.value = 0;
-  statusText.value = 'Preparation…';
+  statusText.value = 'Preparing…';
   stepLogs.value = [];
 
   stepLogs.value.push(`Organism (taxon): ${analysis.value.organism_taxon_id}`);

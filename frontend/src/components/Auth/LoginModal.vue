@@ -5,7 +5,7 @@
       <input v-model="email" type="email" placeholder="Email" required />
       <input v-model="password" type="password" placeholder="Password" required />
       <button :disabled="loading" type="submit">
-        {{ loading ? 'Login…' : 'Log in' }}
+        {{ loading ? 'Logging in...' : 'Log in' }}
       </button>
       <p v-if="err" style="color:#e66; margin:0">{{ err }}</p>
     </form>

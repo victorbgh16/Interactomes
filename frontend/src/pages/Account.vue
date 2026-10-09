@@ -1,13 +1,13 @@
 <template>
   <div style="max-width:900px; margin:40px auto; padding:0 12px;">
-    <h2>My account</h2>
+    <h2>My Account</h2>
 
-    <div v-if="loading">Loading…</div>
+    <div v-if="loading">Loading...</div>
 
     <template v-else>
       <div v-if="user">
         <ul>
-          <li><b>Id:</b> {{ user.id }}</li>
+          <li><b>ID:</b> {{ user.id }}</li>
           <li><b>First name:</b> {{ user.first_name }}</li>
           <li><b>Name:</b> {{ user.last_name }}</li>
           <li><b>Email:</b> {{ user.email }}</li>
@@ -21,7 +21,7 @@
             <RouterLink to="/upload" class="btn">Upload a graph</RouterLink>
           </div>
 
-          <div v-if="datasetsLoading" class="muted" style="margin-top:8px;">Loading datasets…</div>
+          <div v-if="datasetsLoading" class="muted" style="margin-top:8px;">Loading datasets...</div>
           <div v-else-if="datasetsError" class="error" style="margin-top:8px;">{{ datasetsError }}</div>
           <div v-else-if="datasets.length === 0" class="muted" style="margin-top:8px;">No datasets available at this time.</div>
 
@@ -92,7 +92,7 @@ onMounted(async () => {
   try {
     datasets.value = await fetchMyDatasets();
   } catch (e) {
-    datasetsError.value = e?.response?.data?.error || 'Chargement impossible';
+    datasetsError.value = e?.response?.data?.error || 'Loading not possible.';
   } finally {
     datasetsLoading.value = false;
   }

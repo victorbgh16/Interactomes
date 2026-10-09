@@ -202,7 +202,7 @@ router.delete('/:id', authRequired, async (req, res) => {
 router.get('/:id/graph', async (req, res) => {
     try {
         const id = Number(req.params.id);
-        if (!Number.isFinite(id)) return res.status(400).json({ error: 'Bad dataset id' });
+        if (!Number.isFinite(id)) return res.status(400).json({ error: 'Bad dataset ID' });
 
         const dataset = await Dataset.findByPk(id);
         if (!dataset) return res.status(404).json({ error: 'Dataset not found' });
@@ -276,7 +276,7 @@ router.get('/:id/graph', async (req, res) => {
 // GET /datasets/:id/meta  -> renvoie organism name + taxon
 router.get('/:id/meta', async (req, res) => {
     const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ error: 'Bad dataset id' });
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'Bad dataset ID' });
     const row = await Dataset.findByPk(id, {
         include: [{ model: Organism, as: 'organism', attributes: ['taxon_id','name','common_name'] }],
         attributes: ['id','filename','organism_taxon_id']

@@ -4,10 +4,10 @@
       <input
           v-model="searchQuery"
           type="text"
-          placeholder="search for a gene name, protein name, uniprot ID, sequence..."
+          placeholder="Search"
           class="search-input"
           aria-label="Search proteins"
-      />
+      /> <!-- placeholder="search for a gene name, protein name, uniprot ID, sequence..." -->
       <label class="selflinks">
         <input type="checkbox" v-model="showSelfLinks" />
         Self-Links
@@ -24,8 +24,8 @@
       <div class="graph-header">
         <h3>Crosslink Graph</h3>
         <div class="organism-line">
-          <span  v-if="organismName && organismName.length"> Organism name:{{ organismName }}</span>
-          <span v-if="organismTaxon">&nbsp; Taxonomy ID: {{ organismTaxon }}</span>
+          <span  v-if="organismName && organismName.length"> Organism name: {{ organismName }}</span>
+          <span v-if="organismTaxon">&nbsp; Taxon ID: {{ organismTaxon }}</span>
         </div>
       </div>
 
@@ -33,7 +33,7 @@
         <div ref="cyContainer" class="cytoscape cytoscape-graph"></div>
       </div>
       <div class="total-crosslinks">
-        <p>Total crosslinks : {{ totalCrosslinkCount }}</p>
+        <p>Total crosslinks: {{ totalCrosslinkCount }}</p>
       </div>
     </div>
     <div class="crosslink-table-container">
@@ -588,7 +588,7 @@ const generateGraph = async () => {
 
     const fasta = store.fastaData.find(p => p.uniprot_id.toUpperCase() === id);
     if (!fasta || !fasta.sequence) {
-      console.warn(`Séquence introuvable pour ${id}`);
+      console.warn(`Sequence not found for ${id}`);
       return;
     }
 
@@ -1070,9 +1070,9 @@ const generateGraph = async () => {
 
 
 
-        console.log(`[ADD] Préparation du ghost node: ${ghostId}`);
+        console.log(`[ADD] Preparation of ghost node: ${ghostId}`);
         console.log(`       Frise position: (${frisePos.x}, ${frisePos.y})`);
-        console.log(`       Calculé pour position absolue ${pos} => x=${x}, y=${y}`);
+        console.log(`       Calculated for absolute position ${pos} => x=${x}, y=${y}`);
 
         // Ajouter un noeud invisible si pas déjà là
         if (cy.getElementById(ghostId).length === 0) {
@@ -1087,7 +1087,7 @@ const generateGraph = async () => {
           });
 
           const added = cy.getElementById(ghostId);
-          console.log(`[ADD] Ghost ajouté: ${ghostId} | Position réelle:`, added.position());
+          console.log(`[ADD] Ghost added: ${ghostId} | Real position:`, added.position());
         }
 
         const targetNode = cy.getElementById(targetId);

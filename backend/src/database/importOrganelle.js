@@ -45,7 +45,7 @@ async function main() {
 
         // Sequelize ne renvoie pas toujours le nombre d’inserts effectifs → on recompte
         const count = await Organelle.count();
-        console.log(`✅ Seed organelles terminé. Total en base: ${count}`);
+        console.log(`✅ Seed organelles finished. Total in DB: ${count}`);
     } catch (e) {
         console.error('❌ Seed organelles error:', e?.message || e);
         process.exitCode = 1;
