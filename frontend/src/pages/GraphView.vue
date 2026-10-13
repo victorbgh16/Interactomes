@@ -1,50 +1,74 @@
 <template>
-  <div class="graph-toolbar">
-    <div class="graph-toolbar-inner">
-      <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search"
-          class="search-input"
-          aria-label="Search proteins"
-      /> <!-- placeholder="search for a gene name, protein name, uniprot ID, sequence..." -->
-      <label class="selflinks">
-        <input type="checkbox" v-model="showSelfLinks" />
-        Self-Links
-      </label>
-    </div>
-  </div>
+  <div class="graph-page-atlas" :class="{ 'left-open': leftOpen, 'right-open': rightOpen }">
+    <!-- Floating Controls Overlay -->
+    <div class="floating-controls">
+      <!-- 1. Left Sidebar Toggle Button -->
+      <button class="toggle-sidebar-btn" @click="toggleLeft">
+        {{ leftOpen ? '◀ Hide Info' : 'Protein Info ▶' }}
+      </button>
 
-  <div class="graph-page">
-    <div class="protein-info-container">
-      <ProteinInfo :protein="selectedProtein" />
+      <!-- 2. Search Bar + Self-Links -->
+      <div class="search-group-floating">
+        <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search proteins, genes, uniprot ID..."
+            class="search-input"
+            aria-label="Search proteins"
+        />
+        <label class="selflinks">
+          <input type="checkbox" v-model="showSelfLinks" />
+          Self-Links
+        </label>
+      </div>
+
+      <!-- 3. Right Sidebar Toggle Button -->
+      <button class="toggle-sidebar-btn" @click="toggleRight">
+        {{ rightOpen ? 'Hide Table ▶' : '◀ Crosslinks Table' }}
+      </button>
     </div>
 
-    <div class="graph-container">
-      <div class="graph-header">
+    <!-- Full-screen Graph Background -->
+    <div class="graph-container-full">
+      <div class="graph-header-floating">
         <h3>Crosslink Graph</h3>
         <div class="organism-line">
-          <span  v-if="organismName && organismName.length"> Organism name: {{ organismName }}</span>
-          <span v-if="organismTaxon">&nbsp; Taxon ID: {{ organismTaxon }}</span>
+          <span v-if="organismName">Organism: {{ organismName }}</span>
+          <span v-if="organismTaxon">&nbsp; (Taxon: {{ organismTaxon }})</span>
         </div>
       </div>
 
       <div id="cytoscape-wrapper">
         <div ref="cyContainer" class="cytoscape cytoscape-graph"></div>
       </div>
-      <div class="total-crosslinks">
-        <p>Total crosslinks: {{ totalCrosslinkCount }}</p>
+
+      <!-- Bottom Right Counter -->
+      <div class="total-crosslinks-floating-bottom-right">
+        Total crosslinks: {{ totalCrosslinkCount }}
       </div>
     </div>
-    <div class="crosslink-table-container">
-      <CrosslinkTable
-          v-show="selectedProtein && selectedProteinCrosslinks.length"
-          :crosslinks="selectedProteinCrosslinks"
-          :selectedProtein="selectedProtein"
-      />
-      <button class="export-btn" @click="exportSvg">Export to SVG</button>
 
-    </div>
+    <!-- Left Sidebar Overlay -->
+    <aside class="sidebar left-sidebar" :class="{ 'is-closed': !leftOpen }">
+      <div class="sidebar-content">
+        <ProteinInfo :protein="selectedProtein" />
+      </div>
+    </aside>
+
+    <!-- Right Sidebar Overlay -->
+    <aside class="sidebar right-sidebar" :class="{ 'is-closed': !rightOpen }">
+      <div class="sidebar-content">
+        <CrosslinkTable
+            v-if="selectedProtein && selectedProteinCrosslinks.length"
+            :crosslinks="selectedProteinCrosslinks"
+            :selectedProtein="selectedProtein"
+        />
+        <div v-else class="empty-table-prompt">
+          <p>Select a protein on the graph to view crosslinks.</p>
+        </div>
+        <button class="export-btn" @click="exportSvg">Export to SVG</button>
+      </div>
+    </aside>
   </div>
 </template>
 
@@ -58,6 +82,7 @@ import CrosslinkTable from '@/components/CrosslinkTable.vue';
 import ProteinInfo from '@/components/ProteinInfo.vue'
 import {fetchDatasetMeta} from "@/services/datasets.js";
 import cytoscapeSvg from 'cytoscape-svg';
+import { lab } from 'd3';
 
 
 cytoscape.use(cytoscapeSvg);
@@ -70,6 +95,7 @@ const props = defineProps({
   }
 })
 
+
 const route = useRoute();
 const datasetId = ref(Number(route.params.datasetId));
 
@@ -77,6 +103,20 @@ const datasetId = ref(Number(route.params.datasetId));
 const organismName = ref('');
 const organismTaxon = ref(null);
 const cyContainer = ref(null);
+
+const leftOpen = ref(false);
+const rightOpen = ref(false);
+
+function toggleLeft() {
+  leftOpen.value = !leftOpen.value;
+  nextTick(() => handleResize());
+}
+
+function toggleRight() {
+  rightOpen.value = !rightOpen.value;
+  nextTick(() => handleResize());
+}
+
 let cy = null;
 
 function downloadTextFile (text, filename, mime = 'image/svg+xml;charset=utf-8') {
@@ -474,6 +514,7 @@ const generateGraph = async () => {
   cy.on('tap', 'node', evt => {
     evt.preventDefault?.();
 
+
     const currentFilter = filteredProteinIds.value.length > 0 ? new Set(filteredProteinIds.value.map(id => id.toUpperCase())) : null;
 
     cy.nodes().forEach(n => {
@@ -636,6 +677,7 @@ const generateGraph = async () => {
       const keyB = [b.Protein1, b.Protein2].sort().join('|');
       return keyA.localeCompare(keyB);
     });
+    leftOpen.value = true;
 
 
 
@@ -1277,168 +1319,228 @@ watch(() => route.params.datasetId, async (newVal) => {
 
 <style scoped >
 
-/* 3 colonnes en flex, le centre doit grandir */
-.graph-page {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  gap: 16px;
-  width: 100%;                 /* surtout pas 100vw */
-  height: calc(100vh - 120px); /* ajuste selon la hauteur de ta navbar */
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-/* Gauche : ProteinInfo — peut rétrécir si manque de place */
-.protein-info-container {
-  order: 1;
-  flex: 1 1 300px;             /* ⬅️ shrink/expand autorisés, base 300px */
-  min-width: 260px;
-  max-width: 380px;
-  height: 100%;
-  overflow-y: auto;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0.25rem 0.5rem 0.25rem 0;
-}
-
-/* Centre : Graphe — récupère la majorité de l'espace */
-.graph-container {
-  order: 2;
-  flex: 2 1 0;                 /* ⬅️ ratio 2 pour que le centre soit plus large */
-  min-width: 600px;            /* évite qu'il devienne trop étroit */
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-sizing: border-box;
-  padding: 0.25rem 0.5rem;
-}
-
-/* Zone Cytoscape full-size */
-#cytoscape-wrapper { position: relative; width: 100%; height: 100%; }
-.cytoscape-graph   { width: 100%; height: 100%; border: 3px solid #ccc; transform-style: preserve-3d; }
-.cytoscape-graph canvas { left: 0 !important; }
-
-/* Droite : CrosslinkTable — visible en entier si possible, scroll sinon */
-.crosslink-table-container {
-  order: 3;
-  flex: 1 1 340px;             /* ⬅️ shrink/expand autorisés, base 340px */
-  min-width: 300px;
-  max-width: 460px;
-  height: 100%;
-  overflow: auto;              /* scroll vertical ET horizontal si nécessaire */
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0.25rem 0 0.25rem 0.5rem;
-}
-
-/* Si ton tableau est étroit, force un min-width pour voir toutes les colonnes */
-.crosslink-table-container table {
+/* Fullscreen container locked to viewport, zero scrolling */
+.graph-page-atlas {
+  position: absolute;
+  top: 68px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100%;
-  min-width: 520px;            /* ajuste selon tes colonnes */
-  table-layout: auto;
+  height: calc(100vh - 68px);
+  overflow: hidden;
+  background-color: #0b0b0b;
+  box-sizing: border-box;
 }
 
-/* Responsive : sous 1200px on empile pour ne rien couper */
-@media (max-width: 1200px) {
-  .graph-page { flex-direction: column; height: auto; }
-  .protein-info-container,
-  .crosslink-table-container { flex: 0 0 auto; width: 100%; max-width: none; }
-  .graph-container { min-width: 0; height: 70vh; }
+/* Floating Controls Bar */
+.floating-controls {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+  transition: left 0.3s ease-in-out, right 0.3s ease-in-out;
 }
 
-/* (optionnel) sur très grands écrans, donne encore plus au graphe */
-@media (min-width: 1600px) {
-  .graph-container { flex: 3 1 0; }
+/* Shift controls inward when sidebars are open */
+.graph-page-atlas.left-open .floating-controls {
+  left: 396px; /* 380px sidebar + 16px offset */
+}
+.graph-page-atlas.right-open .floating-controls {
+  right: 396px;
 }
 
-/* Barre contenant search + checkbox */
-.graph-toolbar {
-  /* centre le contenu mais autorise un défilement horizontal si trop large */
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  padding: 4px 0;                 /* petit respiro vertical */
-  text-align: center;             /* centre le bloc inner */
+.floating-controls > * {
+  pointer-events: auto;
 }
 
-.graph-toolbar-inner {
-  display: inline-flex;           /* permet le centrage via text-align */
+.search-group-floating {
+  display: flex;
   align-items: center;
   gap: 12px;
-  white-space: nowrap;            /* empêche le retour à la ligne */
-  width: max-content;             /* s’étire à la taille du contenu => scroll si nécessaire */
-  padding: 0 8px;                 /* petite gouttière pour le scroll */
+  background: rgba(22, 22, 22, 0.92);
+  padding: 4px 14px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(6px);
+  max-width: 460px;
+  flex: 1;
 }
 
-/* Input de recherche : largeur “confort” fixe => déclenche le scroll en manque de place */
 .search-input {
-  flex: 0 0 560px;                /* largeur fixe (ajuste : 520/560/600) */
-  height: 41px;
-  box-sizing: border-box;
-  padding: 10px 20px;
-  font-size: 16px;
-  border: 2px solid #ccc;
-  border-radius: 30px;
-  background-color: #424242;
+  flex: 1;
+  width: 100%;
+  height: 32px;
+  padding: 4px 8px;
+  font-size: 14px;
+  border: none;
+  background: transparent !important;
+  color: #fff;
   outline: none;
-  transition: border-color .3s, box-shadow .3s;
-  margin: 0;                      /* ancien centrage auto supprimé */
 }
 
-/* Focus */
-.search-input:focus {
-  border-color: #4CAF50;
-  box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
-}
 .search-input::placeholder {
-  color: #aaa;
-  font-style: italic;
+  color: #888;
 }
 
-/* Checkbox + label */
 .selflinks {
-  flex: 0 0 auto;                 /* ne rétrécit pas */
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  color: #ccc;
+  font-size: 0.85rem;
   user-select: none;
+  white-space: nowrap;
   cursor: pointer;
 }
 
+/* Toggle Buttons */
+.toggle-sidebar-btn {
+  background: rgba(22, 22, 22, 0.92);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  backdrop-filter: blur(6px);
+  white-space: nowrap;
+  transition: background 0.2s;
+}
 
-/* titre + ligne organisme centrés (si utilisés) */
-.graph-header { text-align: center; margin-bottom: 6px; }
-.graph-header h3 { margin: 0; }
-.organism-line { color: #ccc; font-size: .95rem; margin-top: 4px; }
+.toggle-sidebar-btn:hover {
+  background: rgba(45, 45, 45, 0.95);
+}
 
+/* Full-screen Graph Container */
+.graph-container-full {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+#cytoscape-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.cytoscape-graph {
+  width: 100%;
+  height: 100%;
+  background-color: #0b0b0b !important;
+}
+
+/* Floating Title Header */
+.graph-header-floating {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  background: rgba(18, 18, 18, 0.85);
+  padding: 6px 16px;
+  border-radius: 8px;
+  text-align: center;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+
+.graph-header-floating h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.05rem;
+}
 
 .organism-line {
-  color: #ccc;
-  font-size: 0.95rem;
-  margin-top: 4px;
+  color: #aaa;
+  font-size: 0.8rem;
+  margin-top: 2px;
 }
 
-/* Compteur */
-.total-crosslinks {
-  margin: 10px auto 0 auto; /* haut | horizontal | bas */
-  font-weight: bold;
-  font-size: 1.1em;
-  color: #333;
-  display: block;
-  text-align: center; /* facultatif si tu veux centrer aussi le texte */
+/* Bottom Right Counter */
+.total-crosslinks-floating-bottom-right {
+  position: absolute;
+  bottom: 16px;
+  right: 24px;
+  z-index: 5;
+  background: rgba(18, 18, 18, 0.85);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #ccc;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  pointer-events: none;
 }
+
+/* Sliding Sidebars Overlays */
+.sidebar {
+  position: absolute;
+  top: 7px;
+  bottom: 0;
+  width: 380px;
+  z-index: 30;
+  background: rgba(20, 20, 20, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: transform 0.3s ease-in-out;
+  box-sizing: border-box;
+}
+
+.left-sidebar {
+  left: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.left-sidebar.is-closed {
+  transform: translateX(-100%);
+}
+
+.right-sidebar {
+  right: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.right-sidebar.is-closed {
+  transform: translateX(100%);
+}
+
+.sidebar-content {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.empty-table-prompt {
+  color: #888;
+  text-align: center;
+  margin-top: 40px;
+  font-style: italic;
+}
+
 .export-btn {
-  bottom: 20px;   /* distance du bas */
-  right: 20px;    /* distance de la droite */
-  z-index: 10;    /* pour qu’il soit au-dessus du canvas Cytoscape */
-  padding: 8px 12px;
+  width: 100%;
+  margin-top: 16px;
+  padding: 10px;
   background-color: #0074D9;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
 }
 .export-btn:hover {
