@@ -34,7 +34,7 @@
         <h3>Crosslink Graph</h3>
         <div class="organism-line">
           <span v-if="organismName">Organism: {{ organismName }}</span>
-          <span v-if="organismTaxon">&nbsp; (Taxon: {{ organismTaxon }})</span>
+          <span v-if="organismTaxon">&nbsp; (Taxon {{ organismTaxon }})</span>
         </div>
       </div>
 

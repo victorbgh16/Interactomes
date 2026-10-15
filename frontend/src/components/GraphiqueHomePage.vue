@@ -46,8 +46,9 @@ async function loadOrganismGraph(org) {
   let counter = 0
 
   // ⬇️ 1. Récupère le dataset Cyanophora de user 1
-  //const response = await fetch('http://localhost:3001/datasets?user_id=1') pour local uniquement
-  const response = await fetch('/datasets?user_id=1')
+  // const response = await fetch('/datasets?user_id=1')
+  const response = await fetch('http://localhost:3001/datasets?user_id=2') // my user is id=2 so yeah
+  // but this^ is only for local
   const { items: datasets } = await response.json()
 
   const targetDataset = datasets.find(d => d.organism_taxon_id === org.taxon)
@@ -58,8 +59,8 @@ async function loadOrganismGraph(org) {
   }
 
   // ⬇️ 2. Récupère tous les crosslinks pour ce dataset
-  //const res = await fetch(`http://localhost:3001/datasets/${targetDataset.id}/crosslinks?limit=40000`)
-  const res = await fetch(`/datasets/${targetDataset.id}/crosslinks?limit=40000`)
+  const res = await fetch(`http://localhost:3001/datasets/${targetDataset.id}/crosslinks?limit=40000`)
+  // const res = await fetch(`/datasets/${targetDataset.id}/crosslinks?limit=40000`)
 
   const {items} = await res.json()
   console.log(items);
