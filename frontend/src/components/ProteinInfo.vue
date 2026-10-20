@@ -174,11 +174,6 @@
           </a>
         </div>
       </li>
-
-
-
-
-
     </ul>
   </div>
 
@@ -268,6 +263,11 @@ const styledSequence = computed(() => {
     if (types?.has('intra') && types?.has('inter'))      style = 'color: pink; font-weight: bold;'
     else if (types?.has('intra'))                        style = 'color: orange; font-weight: bold;'
     else if (types?.has('inter'))                        style = 'color: purple; font-weight: bold;'
+
+    if (pos % 10 === 0) {
+      return `<span class="aa-with-pos"><span class="aa-number">${pos}</span><span style="${style}">${aa}</span></span>`
+    }
+
     return `<span style="${style}">${aa}</span>`
   }).join('')
 })
@@ -380,7 +380,7 @@ h3 { margin-top: 0; }
   padding: 0.5rem;
   border-radius: 4px;
   background: #3e3e47;
-  max-height: 200px;
+  max-height: 250px;
   overflow: auto;
 }
 .placeholder { padding: 1rem; width: 300px; margin-top: 30px; color: #777; }
@@ -583,7 +583,24 @@ h3 { margin-top: 0; }
 }
 .string-chip:hover { background:#1f2f45; }
 
+:deep(.aa-with-pos) {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  vertical-align: bottom;
+}
 
-
+:deep(.aa-number) {
+  position: absolute;
+  top: -7px;
+  font-size: 9px;
+  color: #888;
+  transform: translateX(-50%);
+  left: 50%;
+  white-space: nowrap;
+  pointer-events: none;
+  font-family: monospace;
+}
 
 </style>

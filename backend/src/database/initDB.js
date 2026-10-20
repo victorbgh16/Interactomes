@@ -22,7 +22,8 @@ export async function seedOrganelles() {
             console.log('🌱 ENV:', process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD);
             await sequelize.authenticate();
             console.log('✅ DB connected');
-            await sequelize.sync({ alter: true });
+            // await sequelize.sync({ alter: true });
+            await sequelize.sync();
             await seedOrganelles();
             console.log('✅ Tables synced');
             return;

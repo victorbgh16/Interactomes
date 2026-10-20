@@ -66,7 +66,11 @@
         <div v-else class="empty-table-prompt">
           <p>Select a protein on the graph to view crosslinks.</p>
         </div>
-        <button class="export-btn" @click="exportSvg">Export to SVG</button>
+        <div class="structural-mapping">
+          <h3>Structural Details</h3>
+          <p>Structural details will appear here.</p>
+        </div>
+        <button class="export-btn" @click="exportSvg">Export Graph to SVG</button>
       </div>
     </aside>
   </div>
@@ -610,6 +614,9 @@ const generateGraph = async () => {
         selectedProteinCrosslinks.value = [];
         lastFriseNodeId = null;
         lastFriseForProtein = null;
+        
+        leftOpen.value = false;
+        rightOpen.value = false;
       }
       // Restaurer visibilité normale
       cy.nodes().forEach(n => {
@@ -678,6 +685,7 @@ const generateGraph = async () => {
       return keyA.localeCompare(keyB);
     });
     leftOpen.value = true;
+    rightOpen.value = true;
 
 
 

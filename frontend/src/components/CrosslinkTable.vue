@@ -72,9 +72,8 @@ function exportCsv () {
 <style scoped>
 .crosslink-table {
   width: 100%;
-  padding: 1rem;
-  background: #242424;
-  height: 800px;
+  background-color: #141414;
+  color: #fff;
 }
 
 
@@ -83,6 +82,9 @@ function exportCsv () {
   align-items: center;
   justify-content: space-between;
   margin-bottom: .5rem;
+  background-color: #141414;
+  color: #dcdcdc;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .export-csv-btn {
@@ -98,8 +100,9 @@ function exportCsv () {
 }
 
 .crosslink-table ::v-deep(.p-datatable-thead > tr > th) {
-  background-color: #242424 !important;
+  background-color: #141414 !important;
   color: white;
+  font-style: italic;
   position: sticky;
   top: 0;
   z-index: 1;
@@ -116,4 +119,5 @@ function exportCsv () {
 .crosslink-table ::v-deep(.p-datatable-thead > tr>th) {
   border-top: 1px solid #888;
 }
+
 </style>
