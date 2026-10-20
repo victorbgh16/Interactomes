@@ -68,7 +68,12 @@
         </div>
         <div class="structural-mapping">
           <h3>Structural Details</h3>
-          <p>Structural details will appear here.</p>
+          <div v-if="alphafoldResult" class="alphafold-result">
+            <p>{{ alphafoldResult.requestUrl }}</p>
+          </div>
+          <div v-else>
+            <p>Structural details will appear here.</p>
+          </div>
         </div>
         <button class="export-btn" @click="exportSvg">Export Graph to SVG</button>
       </div>
@@ -87,6 +92,7 @@ import ProteinInfo from '@/components/ProteinInfo.vue'
 import {fetchDatasetMeta} from "@/services/datasets.js";
 import cytoscapeSvg from 'cytoscape-svg';
 import { lab } from 'd3';
+import { fetchAlphafoldData } from "@/services/alphafold.js";
 
 
 cytoscape.use(cytoscapeSvg);
@@ -110,6 +116,8 @@ const cyContainer = ref(null);
 
 const leftOpen = ref(false);
 const rightOpen = ref(false);
+
+const alphafoldResult = ref(null);
 
 function toggleLeft() {
   leftOpen.value = !leftOpen.value;
@@ -515,7 +523,7 @@ const generateGraph = async () => {
     });
   });
 
-  cy.on('tap', 'node', evt => {
+  cy.on('tap', 'node', async evt => {
     evt.preventDefault?.();
 
 
@@ -617,6 +625,7 @@ const generateGraph = async () => {
         
         leftOpen.value = false;
         rightOpen.value = false;
+        alphafoldResult.value = null;
       }
       // Restaurer visibilité normale
       cy.nodes().forEach(n => {
@@ -684,9 +693,17 @@ const generateGraph = async () => {
       const keyB = [b.Protein1, b.Protein2].sort().join('|');
       return keyA.localeCompare(keyB);
     });
+
+    const predictionData = await fetchAlphafoldData(fasta.uniprot_id);
+    if (predictionData) {
+      alphafoldResult.value = predictionData;
+      console.log("CIF Download URL:", predictionData.cifUrl);
+      console.log("Predicted Aligned Error Matrix Image URL:", predictionData.paeImgUrl);
+      console.log("Predicted Aligned Error Matrix JSON URL:", predictionData.paeJsonUrl);
+    }
+
     leftOpen.value = true;
     rightOpen.value = true;
-
 
 
     // Si une frise est déjà affichée, restaurer son nœud d'origine
@@ -1347,7 +1364,7 @@ watch(() => route.params.datasetId, async (newVal) => {
   top: 16px;
   left: 16px;
   right: 16px;
-  z-index: 25;
+  z-index: 15;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1500,7 +1517,7 @@ watch(() => route.params.datasetId, async (newVal) => {
   top: 7px;
   bottom: 0;
   width: 380px;
-  z-index: 30;
+  z-index: 15;
   background: rgba(20, 20, 20, 0.95);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);

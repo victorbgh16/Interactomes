@@ -20,7 +20,7 @@
       <!-- Hello + Logout en ligne quand connecté -->
 
       <span v-if="isLoggedIn" class="hello" :title="fullName(user)">
-        👋 {{ fullName(user) }}
+        {{ fullName(user) }}
       </span>
 
       <!-- Bouton profil (ouvre le menu) -->
