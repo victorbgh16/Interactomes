@@ -9,6 +9,12 @@ import organellesRoutes from './routes/organelles.js';
 import datasetsRoutes from './routes/datasets.js';
 import crosslinksRoutes from './routes/crosslinks.js';
 import sequelize from './database/config.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import proteinsRouter from './routes/pae.js'
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -52,6 +58,8 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+app.use(express.static(path.join(__dirname, '../public')));
+
 import './database/initDB.js';
 import './models/index.js';
 
@@ -78,6 +86,7 @@ app.use('/organelles', organellesRoutes);
 app.use('/uploads', uploadsRoutes);
 app.use('/datasets', datasetsRoutes);
 app.use('/', crosslinksRoutes);
+app.use('/api/proteins', proteinsRouter);
 
 
 // Health ultra-simple

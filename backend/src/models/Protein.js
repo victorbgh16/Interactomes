@@ -11,7 +11,8 @@ const Protein = sequelize.define('Protein', {
     go_terms: { type: DataTypes.TEXT },
     subcellular_locations: { type: DataTypes.TEXT, allowNull: true },
     string_refs:           { type: DataTypes.TEXT, allowNull: true },
-    updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
+    updated_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+    pae_image_path: {type: DataTypes.STRING, allowNull: true, field: 'pae_image_path'}
 }, {
     tableName: 'proteins',
     timestamps: false,

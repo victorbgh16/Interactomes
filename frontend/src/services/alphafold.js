@@ -23,11 +23,36 @@ export async function fetchAlphafoldData(uniprotId) {
         cifUrl: entry.cifUrl,
         meanPlddt: entry.globalMetricValue,
         paeImgUrl: entry.paeImageUrl,
-        paeJsonUrl: entry.paeDocUrl,
+        paeDocUrl: entry.paeDocUrl,
         requestUrl: url,
 
     };
   } catch (error) {
     console.error("AlphaFold fetch error:", error.message);
+  }
+}
+
+// TODO: probably need to pass the threshold here too
+export async function getOrGeneratePaeImage(uniprotId, cifUrl, paeDocUrl, crosslinks) {
+  try {
+    const response = await fetch(`http://localhost:3001/api/proteins/${uniprotId}/pae`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        cifUrl,
+        paeDocUrl,
+        crosslinks
+      })
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch PAE image');
+    
+    const data = await response.json();
+    return data.paeImagePath;
+  } catch (err) {
+    console.error(err);
+    return null;
   }
 }

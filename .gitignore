@@ -144,3 +144,10 @@ dist
 # VSCode
 *.code-workspace
 /backend/uploads
+
+# python
+/backend/src/python/env
+
+# exclude generated PAE images
+/backend/public/*
+/backend/src/python/*.png

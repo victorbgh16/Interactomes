@@ -68,11 +68,9 @@
         </div>
         <div class="structural-mapping">
           <h3>Structural Details</h3>
-          <div v-if="alphafoldResult" class="alphafold-result">
-            <p>{{ alphafoldResult.requestUrl }}</p>
-          </div>
-          <div v-else>
-            <p>Structural details will appear here.</p>
+          <div v-if="paeImageUrl" class="pae-card">
+            <h4>Predicted Aligned Error (PAE)</h4>
+            <img :src="`http://localhost:3001/${paeImageUrl}`" alt="PAE Plot" class="pae-preview" />
           </div>
         </div>
         <button class="export-btn" @click="exportSvg">Export Graph to SVG</button>
@@ -93,6 +91,7 @@ import {fetchDatasetMeta} from "@/services/datasets.js";
 import cytoscapeSvg from 'cytoscape-svg';
 import { lab } from 'd3';
 import { fetchAlphafoldData } from "@/services/alphafold.js";
+import { getOrGeneratePaeImage } from '../services/alphafold';
 
 
 cytoscape.use(cytoscapeSvg);
@@ -118,6 +117,7 @@ const leftOpen = ref(false);
 const rightOpen = ref(false);
 
 const alphafoldResult = ref(null);
+const paeImageUrl = ref(null);
 
 function toggleLeft() {
   leftOpen.value = !leftOpen.value;
@@ -626,6 +626,7 @@ const generateGraph = async () => {
         leftOpen.value = false;
         rightOpen.value = false;
         alphafoldResult.value = null;
+        paeImageUrl.value = null;
       }
       // Restaurer visibilité normale
       cy.nodes().forEach(n => {
@@ -659,7 +660,7 @@ const generateGraph = async () => {
       return p1 === id || p2 === id;
     });
 
-// 2. Supprimer les doublons identiques sur la même protéine et positions
+    // 2. Supprimer les doublons identiques sur la même protéine et positions
     const seen = new Map();
 
     links.forEach(link => {
@@ -687,13 +688,14 @@ const generateGraph = async () => {
       }
     });
 
-// Trier par paire de protéines (ordre alpha)
+    // Trier par paire de protéines (ordre alpha)
     selectedProteinCrosslinks.value = Array.from(seen.values()).sort((a, b) => {
       const keyA = [a.Protein1, a.Protein2].sort().join('|');
       const keyB = [b.Protein1, b.Protein2].sort().join('|');
       return keyA.localeCompare(keyB);
     });
 
+    /*
     const predictionData = await fetchAlphafoldData(fasta.uniprot_id);
     if (predictionData) {
       alphafoldResult.value = predictionData;
@@ -701,6 +703,26 @@ const generateGraph = async () => {
       console.log("Predicted Aligned Error Matrix Image URL:", predictionData.paeImgUrl);
       console.log("Predicted Aligned Error Matrix JSON URL:", predictionData.paeJsonUrl);
     }
+    */
+
+    const afData = await fetchAlphafoldData(fasta.uniprot_id);
+    if (afData && afData.cifUrl && afData.paeDocUrl) {
+
+    // console.log("=== COPY THIS FOR PYTHON TESTING ===");
+    // console.log("UniProt ID:", fasta.uniprot_id);
+    // console.log("CIF URL:", afData.cifUrl);
+    // console.log("PAE URL:", afData.paeDocUrl);
+    // console.log("Crosslinks JSON:", JSON.stringify(selectedProteinCrosslinks.value));
+    // console.log("====================================");
+
+      paeImageUrl.value = await getOrGeneratePaeImage(
+        fasta.uniprot_id,
+        afData.cifUrl,
+        afData.paeDocUrl,
+        selectedProteinCrosslinks.value
+      );
+    }
+
 
     leftOpen.value = true;
     rightOpen.value = true;
@@ -861,7 +883,7 @@ const generateGraph = async () => {
       }
     });
 
-// S'assurer que le nœud frise est au premier plan
+    // S'assurer que le nœud frise est au premier plan
     const friseNode = cy.getElementById(`frise-${id}`);
     if (friseNode.nonempty()) {
       const json = friseNode.json();
@@ -1070,7 +1092,7 @@ const generateGraph = async () => {
           const x1 = position.x - friseWidth / 2 + pos1 * pxPerAA;
           const x2 = position.x - friseWidth / 2 + pos2 * pxPerAA;
 
-// Ajout des deux noeuds invisibles si nécessaires
+          // Ajout des deux noeuds invisibles si nécessaires
           if (cy.getElementById(ghostId1).length === 0) {
             cy.add({
               group: 'nodes',
@@ -1095,11 +1117,11 @@ const generateGraph = async () => {
 
           const rawDx = Math.abs(x2 - x1); // distance brute en px
 
-// 🔁 Normalisation logarithmique pour écraser les grandes distances
+          // 🔁 Normalisation logarithmique pour écraser les grandes distances
           const normalizedDx = Math.log2(rawDx + 10); // +10 pour éviter log(0)
           const arcHeight = -normalizedDx * 25; // facteur d’échelle à ajuster
 
-// Ajout de l’arche (arc de cercle) entre les deux positions
+          // Ajout de l’arche (arc de cercle) entre les deux positions
           cy.add({
             group: 'edges',
             data: {
@@ -1570,6 +1592,21 @@ watch(() => route.params.datasetId, async (newVal) => {
 }
 .export-btn:hover {
   background-color: #005fa3;
+}
+
+.pae-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+}
+
+.pae-card img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
 }
 
 </style>
