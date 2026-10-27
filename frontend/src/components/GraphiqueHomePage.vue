@@ -33,6 +33,7 @@ const organisms = [
   { name: 'Tetrahymena thermophila (strain SB210)', taxon: 312017, short: 'Tetrahymena' }
 ]
 
+const dataset = ref(null);
 const clusterColors = d3.schemeCategory10  // jusqu'à 10 clusters — peut être étendu plus tard
 const nodeMap = new Map()
 onMounted(async () => {
@@ -52,6 +53,7 @@ async function loadOrganismGraph(org) {
   const { items: datasets } = await response.json()
 
   const targetDataset = datasets.find(d => d.organism_taxon_id === org.taxon)
+  dataset.value = targetDataset;
 
   if (!targetDataset) {
     console.warn('Dataset not found')
@@ -180,6 +182,10 @@ function drawGraph(nodes, links) {
       .join('circle')
       .attr('r', 3)
       .attr('fill', d => clusterColors[d.cluster % clusterColors.length])
+      .on("click", function(d) {
+        window.location.replace(`http://localhost:5173/graph/${dataset.value.id}`); //! local only
+      });
+      /*
       .call(
           d3.drag()
               .on('start', (event, d) => {
@@ -197,6 +203,7 @@ function drawGraph(nodes, links) {
                 d.fy = null
               })
       )
+      */
 
   const labels = zoomGroup.append('g')
       .selectAll('text')
