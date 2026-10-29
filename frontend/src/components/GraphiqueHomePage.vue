@@ -20,6 +20,9 @@
 <script setup>
 import * as d3 from 'd3'
 import { onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const graphContainer = ref(null)
 const showLabels = ref(false)
@@ -182,8 +185,22 @@ function drawGraph(nodes, links) {
       .join('circle')
       .attr('r', 3)
       .attr('fill', d => clusterColors[d.cluster % clusterColors.length])
-      .on("click", function(d) {
-        window.location.replace(`http://localhost:5173/graph/${dataset.value.id}`); //! local only
+      .on("click", function(event, d) {
+        event.stopPropagation();
+
+        const proteinId = d.uniprot_id || d.uniprotId || d.id;
+        const datasetId = dataset.value.id;
+
+        if (!datasetId || !proteinId) {
+          console.warn("Missing dataset ID or protein ID");
+          return;
+        }
+
+        // window.location.replace(`http://localhost:5173/graph/${dataset.value.id}`); //! local only
+        router.push({
+          path: `/graph/${datasetId}`,
+          query: { protein: proteinId }
+        });
       });
       /*
       .call(

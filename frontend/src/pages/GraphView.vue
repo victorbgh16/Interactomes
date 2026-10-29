@@ -82,7 +82,7 @@
 <script setup>
 import {ref, onMounted, watch, onBeforeUnmount, nextTick, computed} from 'vue'
 import { useDataStore } from '@/store/dataStore.js'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import cytoscape from 'cytoscape';
 import coseBilkent from 'cytoscape-cose-bilkent';
 import CrosslinkTable from '@/components/CrosslinkTable.vue';
@@ -106,6 +106,7 @@ const props = defineProps({
 
 
 const route = useRoute();
+const router = useRouter();
 const datasetId = ref(Number(route.params.datasetId));
 
 // References
@@ -627,6 +628,11 @@ const generateGraph = async () => {
         rightOpen.value = false;
         alphafoldResult.value = null;
         paeImageUrl.value = null;
+
+        router.replace({
+          query: {...route.query, protein: undefined}
+        });
+
       }
       // Restaurer visibilité normale
       cy.nodes().forEach(n => {
@@ -643,6 +649,10 @@ const generateGraph = async () => {
 
       return;
     }
+
+    router.replace({
+      query: {...route.query, protein: id}
+    });
 
     const fasta = store.fastaData.find(p => p.uniprot_id.toUpperCase() === id);
     if (!fasta || !fasta.sequence) {
@@ -1328,6 +1338,33 @@ onMounted(async () => {
   if (cy) {
     cy.resize();
     cy.fit();
+  }
+
+  if (route.query.protein) {
+    const targetId = route.query.protein.toUpperCase();
+    const node = cy.getElementById(targetId);
+    if (node.nonempty()) {
+      node.trigger('tap');
+    }
+  }
+});
+
+watch(() => route.query.protein, async (newVal) => {
+  if (!cy) return;
+  const currentSelected = selectedProtein.value?.uniprot_id?.toUpperCase();
+  const targetId = newVal ? newVal.toUpperCase() : null;
+
+  if (targetId && targetId !== currentSelected) {
+    const node = cy.getElementById(targetId);
+    if (node.nonempty()) {
+      node.trigger('tap');
+    }
+  } else if (!targetId && currentSelected) {
+    // If query parameter was cleared from URL, close the active frise
+    const friseNode = cy.getElementById(`frise-${currentSelected}`);
+    if (friseNode.nonempty()) {
+      friseNode.trigger('tap');
+    }
   }
 });
 
