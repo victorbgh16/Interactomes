@@ -66,13 +66,27 @@
         <div v-else class="empty-table-prompt">
           <p>Select a protein on the graph to view crosslinks.</p>
         </div>
-        <div class="structural-mapping">
+        <div class="structural-mapping full-width-section">
           <h3>Structural Details</h3>
           <div v-if="paeImageUrl" class="pae-card">
             <h4>Predicted Aligned Error (PAE)</h4>
             <img :src="`http://localhost:3001/${paeImageUrl}`" alt="PAE Plot" class="pae-preview" />
           </div>
+          <h4>Predicted 3D Structure</h4>
+          <div ref="viewerContainer" style="height: 350px; position: relative; width: 100%;"></div>
+
+          <div class="plddt-legend">
+            <span class="legend-title">Model Confidence (pLDDT)</span>
+            <div class="legend-scale">
+              <span class="legend-item"><i style="background: #0053D6;"></i> Very high (&gt;90)</span>
+              <span class="legend-item"><i style="background: #65CBF3;"></i> Confident (70-90)</span>
+              <span class="legend-item"><i style="background: #FFDB13;"></i> Low (50-70)</span>
+              <span class="legend-item"><i style="background: #FF7D45;"></i> Very low (&lt;50)</span>
+              <span class="mean-plddt">Mean pLDDT: {{ meanPlddt }}</span>
+            </div>
+          </div>
         </div>
+        <p><small>PAE and 3D structure data are both taken from the <a href="https://alphafold.ebi.ac.uk/">AlphaFold DB</a>.</small></p>
         <button class="export-btn" @click="exportSvg">Export Graph to SVG</button>
       </div>
     </aside>
@@ -119,6 +133,67 @@ const rightOpen = ref(false);
 
 const alphafoldResult = ref(null);
 const paeImageUrl = ref(null);
+const viewerContainer = ref(null);
+let viewerInstance = null;
+
+const meanPlddt = ref(null);
+
+async function load3DViewer(cifUrl) {
+  if (!viewerContainer.value) return
+
+  // 1. Clear any existing viewer contents from previous selections
+  viewerContainer.value.innerHTML = ''
+
+  if (!window.$3Dmol) {
+    console.error("3Dmol is not loaded yet.")
+    return
+  }
+
+  try {
+    // 2. Create a new viewer instance with a dark background matching your sidebar
+    viewerInstance = window.$3Dmol.createViewer(viewerContainer.value, {
+      backgroundColor: '#141414'
+    })
+
+    console.log("Fetching CIF from:", cifUrl)
+    
+    // 3. Fetch the CIF file text explicitly (handles CORS & errors cleanly)
+    const response = await fetch(cifUrl)
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+    const cifText = await response.text()
+
+    // 4. Add the model data into the viewer
+    viewerInstance.addModel(cifText, 'cif')
+
+    // 5. Apply cartoon spectrum style, zoom, and render
+    viewerInstance.setStyle({}, {
+      cartoon: {
+        colorscheme: {
+          prop: 'b',
+          gradient: 'linear',
+          min: 50,
+          max: 100,
+          colors: ['#FF7D45', '#FFDB13', '#65CBF3', '#0053D6'] // colors for very low, low, high, very high pLDDT confidence
+        }
+      }
+    })
+    viewerInstance.zoomTo()
+    viewerInstance.render()
+
+    console.log("3D structure successfully rendered!")
+  } catch (err) {
+    console.error("Failed to load 3D structure:", err)
+  }
+}
+
+// Watch for when the AlphaFold CIF URL becomes available or changes
+watch(() => alphafoldResult.value?.cifUrl, async (newUrl) => {
+  if (newUrl) {
+    await nextTick() // Ensure the container DOM element is rendered
+    load3DViewer(newUrl)
+  }
+})
+
 
 function toggleLeft() {
   leftOpen.value = !leftOpen.value;
@@ -628,6 +703,7 @@ const generateGraph = async () => {
         rightOpen.value = false;
         alphafoldResult.value = null;
         paeImageUrl.value = null;
+        meanPlddt.value = null;
 
         router.replace({
           query: {...route.query, protein: undefined}
@@ -724,6 +800,9 @@ const generateGraph = async () => {
     // console.log("PAE URL:", afData.paeDocUrl);
     // console.log("Crosslinks JSON:", JSON.stringify(selectedProteinCrosslinks.value));
     // console.log("====================================");
+
+      alphafoldResult.value = afData;
+      meanPlddt.value = afData.meanPlddt;
 
       paeImageUrl.value = await getOrGeneratePaeImage(
         fasta.uniprot_id,
@@ -1644,6 +1723,55 @@ watch(() => route.params.datasetId, async (newVal) => {
   height: auto;
   object-fit: contain;
   display: block;
+}
+
+.full-width-section {
+  margin-left: -16px;
+  margin-right: -16px;
+  width: calc(100% + 32px);
+}
+
+.full-width-section > h3,
+.full-width-section > .pae-card,
+.full-width-section > h4 {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.plddt-legend {
+  padding: 12px 16px;
+  background: rgba(15, 15, 15, 0.75);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.8rem;
+  color: #ccc;
+}
+
+.legend-title {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.legend-scale {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-item i {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+  flex-shrink: 0;
 }
 
 </style>
