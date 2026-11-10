@@ -7,7 +7,13 @@
       <button class="export-csv-btn" @click="exportCsv">Export CSV</button>
     </div>
 
-    <DataTable :value="crosslinks" scrollable scrollHeight="600px" class="p-datatable-sm">
+    <DataTable
+      :value="crosslinks"
+      :rowClass="getRowClass"
+      scrollable
+      scrollHeight="600px"
+      class="p-datatable-sm"
+    >
       <Column field="Protein1" header="Protein1" />
       <Column field="Protein2" header="Protein2" />
       <Column field="AbsPos1" header="AbsPos1" />
@@ -31,6 +37,11 @@ const props = defineProps({
   crosslinks: {
     type: Array,
     required: true
+  },
+  selectedCrosslink: {
+    type: Object,
+    required: false,
+    default: null,
   }
 })
 
@@ -67,6 +78,22 @@ function exportCsv () {
   URL.revokeObjectURL(url)
   a.remove()
 }
+
+function isSelected(link) {
+  if (!props.selectedCrosslink) return false;
+  return (
+    link.Protein1 === props.selectedCrosslink.Protein1 &&
+    link.Protein2 === props.selectedCrosslink.Protein2 &&
+    link.AbsPos1 === props.selectedCrosslink.AbsPos1 &&
+    link.AbsPos2 === props.selectedCrosslink.AbsPos2
+  );
+}
+
+function getRowClass(data) {
+  return {
+    'highlighted-row': isSelected(data)
+  };
+}
 </script>
 
 <style scoped>
@@ -75,7 +102,6 @@ function exportCsv () {
   background-color: #141414;
   color: #fff;
 }
-
 
 .table-header {
   display: flex;
@@ -118,6 +144,11 @@ function exportCsv () {
 }
 .crosslink-table ::v-deep(.p-datatable-thead > tr>th) {
   border-top: 1px solid #888;
+}
+
+:deep(.highlighted-row) {
+  background-color: rgba(46, 204, 113, 0.2) !important;
+  border-left: 3px solid #2ecc71;
 }
 
 </style>

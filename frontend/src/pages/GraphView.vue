@@ -57,11 +57,12 @@
 
     <!-- Right Sidebar Overlay -->
     <aside class="sidebar right-sidebar" :class="{ 'is-closed': !rightOpen }">
-      <div class="sidebar-content">
+      <div class="sidebar-content" ref="rightSidebarContent">
         <CrosslinkTable
             v-if="selectedProtein && selectedProteinCrosslinks.length"
             :crosslinks="selectedProteinCrosslinks"
             :selectedProtein="selectedProtein"
+            :selectedCrosslink="selectedCrosslink"
         />
         <div v-else class="empty-table-prompt">
           <p>Select a protein on the graph to view crosslinks.</p>
@@ -137,6 +138,21 @@ const viewerContainer = ref(null);
 let viewerInstance = null;
 
 const meanPlddt = ref(null);
+
+const selectedCrosslink = ref(null);
+const rightSidebarContent = ref(null);
+
+watch (selectedCrosslink, async (newVal) => {
+  if (newVal) {
+    await nextTick();
+    if (rightSidebarContent.value) {
+      rightSidebarContent.value.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  }
+});
 
 async function load3DViewer(cifUrl) {
   if (!viewerContainer.value) return
@@ -450,6 +466,7 @@ const generateGraph = async () => {
       {
         selector: 'edge[type="intra"]',
         style: {
+          /*
           'curve-style': 'unbundled-bezier',
           'control-point-distance': 30,
           'control-point-weight': 0.5,
@@ -460,6 +477,13 @@ const generateGraph = async () => {
           label: 'data(abs1)',
           'font-size': 6,
           'text-margin-y': -10
+          */
+          'curve-style': 'unbundled-bezier',
+          'control-point-distances': 'data(arcHeight)',
+          'control-point-weights': 0.5,
+          'line-color': '#f0a31a',
+          'width': 1,
+          'target-arrow-shape': 'none'
         }
       },
       {
@@ -557,6 +581,15 @@ const generateGraph = async () => {
           'width': 0.8,
           'curve-style': 'straight',
           'opacity': 0.8
+        }
+      },
+      {
+        selector: 'edge.edge-highlight',
+        style: {
+          'line-color': '#2ecc71',
+          'width': 3.5,
+          'opacity': 1,
+          'z-index': 999
         }
       }
     ]
@@ -696,11 +729,16 @@ const generateGraph = async () => {
 
         selectedProtein.value = null;
         selectedProteinCrosslinks.value = [];
+
+        selectedCrosslink.value = null;
+        cy.edges().removeClass('edge-highlight');
+
         lastFriseNodeId = null;
         lastFriseForProtein = null;
         
         leftOpen.value = false;
         rightOpen.value = false;
+
         alphafoldResult.value = null;
         paeImageUrl.value = null;
         meanPlddt.value = null;
@@ -737,6 +775,9 @@ const generateGraph = async () => {
     }
 
     selectedProtein.value = fasta;
+    
+    selectedCrosslink.value = null;
+    cy.edges().removeClass('edge-highlight');
 
     // 1. Filtrer les lignes du CSV impliquant la protéine sélectionnée
     let links = store.csvData.filter(link => {
@@ -781,16 +822,6 @@ const generateGraph = async () => {
       return keyA.localeCompare(keyB);
     });
 
-    /*
-    const predictionData = await fetchAlphafoldData(fasta.uniprot_id);
-    if (predictionData) {
-      alphafoldResult.value = predictionData;
-      console.log("CIF Download URL:", predictionData.cifUrl);
-      console.log("Predicted Aligned Error Matrix Image URL:", predictionData.paeImgUrl);
-      console.log("Predicted Aligned Error Matrix JSON URL:", predictionData.paeJsonUrl);
-    }
-    */
-
     const afData = await fetchAlphafoldData(fasta.uniprot_id);
     if (afData && afData.cifUrl && afData.paeDocUrl) {
 
@@ -812,10 +843,8 @@ const generateGraph = async () => {
       );
     }
 
-
     leftOpen.value = true;
     rightOpen.value = true;
-
 
     // Si une frise est déjà affichée, restaurer son nœud d'origine
 
@@ -1220,9 +1249,10 @@ const generateGraph = async () => {
               type: 'intra',
               abs1: pos1,
               abs2: pos2,
-              friseParent: `frise-${id}`
+              friseParent: `frise-${id}`,
+              arcHeight: arcHeight
             },
-            style: {
+            /* style: {
               'curve-style': 'unbundled-bezier',
               'control-point-distances': [arcHeight],
               'control-point-weights': [0.5],
@@ -1230,6 +1260,7 @@ const generateGraph = async () => {
               'width': 1,
               'target-arrow-shape': 'none'
             },
+            */
             classes: 'crosslink'
           });
         }
@@ -1286,6 +1317,50 @@ const generateGraph = async () => {
           });
           console.log(`[ADD] Edge inter: ${ghostId} ➝ ${targetId}`);
         }
+      }
+    });
+
+    cy.on('tap', 'edge', evt => {
+      const edge = evt.target;
+      const edgeType = edge.data('type'); // 'intra' or 'inter'
+
+      if (!edgeType || !selectedProtein.value) return;
+
+      const currentProt = selectedProtein.value.uniprot_id.toUpperCase();
+      let clickedLink = null;
+
+      if (edgeType === 'intra') {
+        const abs1 = edge.data('abs1');
+        const abs2 = edge.data('abs2');
+
+        clickedLink = selectedProteinCrosslinks.value.find(l => {
+          const p1 = l.Protein1.toUpperCase();
+          const p2 = l.Protein2.toUpperCase();
+          const a1 = l.AbsPos1;
+          const a2 = l.AbsPos2;
+          return p1 === currentProt && p2 === currentProt &&
+            ((a1 === abs1 && a2 === abs2) || (a1 === abs2 && a2 === abs1));
+        });
+      } else if (edgeType === 'inter') {
+        const absPos = edge.data('abs');
+        const partnerProt = edge.data('target').toUpperCase();
+
+        clickedLink = selectedProteinCrosslinks.value.find(l => {
+          const p1 = l.Protein1.toUpperCase();
+          const p2 = l.Protein2.toUpperCase();
+          const a1 = l.AbsPos1;
+          const a2 = l.AbsPos2;
+          return ((p1 === currentProt && p2 === partnerProt && a1 === absPos) ||
+            (p2 === currentProt && p1 === partnerProt && a2 === absPos));
+        });
+      }
+
+      if (clickedLink) {
+        selectedCrosslink.value = clickedLink;
+
+        // Visual graph feedback: clear old highlights and highlight the clicked edge
+        cy.edges().removeClass('edge-highlight');
+        edge.addClass('edge-highlight');
       }
     });
   });
@@ -1434,12 +1509,16 @@ watch(() => route.query.protein, async (newVal) => {
   const targetId = newVal ? newVal.toUpperCase() : null;
 
   if (targetId && targetId !== currentSelected) {
+    selectedCrosslink.value = null;
+    cy.edges().removeClass('edge-highlight');
     const node = cy.getElementById(targetId);
     if (node.nonempty()) {
       node.trigger('tap');
     }
   } else if (!targetId && currentSelected) {
     // If query parameter was cleared from URL, close the active frise
+    selectedCrosslink.value = null;
+    cy.edges().removeClass('edge-highlight');
     const friseNode = cy.getElementById(`frise-${currentSelected}`);
     if (friseNode.nonempty()) {
       friseNode.trigger('tap');
