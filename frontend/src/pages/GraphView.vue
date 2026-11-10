@@ -51,7 +51,10 @@
     <!-- Left Sidebar Overlay -->
     <aside class="sidebar left-sidebar" :class="{ 'is-closed': !leftOpen }">
       <div class="sidebar-content">
-        <ProteinInfo :protein="selectedProtein" />
+        <ProteinInfo
+          :protein="selectedProtein"
+          :selectedCrosslink="selectedCrosslink"
+        />
       </div>
     </aside>
 
@@ -104,7 +107,7 @@ import CrosslinkTable from '@/components/CrosslinkTable.vue';
 import ProteinInfo from '@/components/ProteinInfo.vue'
 import {fetchDatasetMeta} from "@/services/datasets.js";
 import cytoscapeSvg from 'cytoscape-svg';
-import { lab } from 'd3';
+import { cross, lab } from 'd3';
 import { fetchAlphafoldData } from "@/services/alphafold.js";
 import { getOrGeneratePaeImage } from '../services/alphafold';
 
@@ -142,8 +145,11 @@ const meanPlddt = ref(null);
 const selectedCrosslink = ref(null);
 const rightSidebarContent = ref(null);
 
-watch (selectedCrosslink, async (newVal) => {
-  if (newVal) {
+let crosslinkShape = null; // tracks the current 3D line/cylinder shape
+
+watch(selectedCrosslink, async (newLink) => {
+  /*
+  if (newLink) {
     await nextTick();
     if (rightSidebarContent.value) {
       rightSidebarContent.value.scrollTo({
@@ -152,6 +158,81 @@ watch (selectedCrosslink, async (newVal) => {
       });
     }
   }
+  */
+
+  if (!viewerInstance) return;
+
+  if (crosslinkShape) {
+    viewerInstance.removeShape(crosslinkShape);
+    crosslinkShape = null;
+  }
+
+  viewerInstance.setStyle({}, {
+    cartoon: {
+      colorscheme: {
+        prop: 'b',
+        gradient: 'linear',
+        min: 50,
+        max: 100,
+        colors: ['#FF7D45', '#FFDB13', '#65CBF3', '#0053D6']
+      }
+    }
+  });
+
+  if (newLink && selectedProtein.value) {
+    const currentProt = selectedProtein.value.uniprot_id.toUpperCase();
+    const p1 = newLink.Protein1.toUpperCase();
+    const p2 = newLink.Protein2.toUpperCase();
+    const abs1 = Number(newLink.AbsPos1);
+    const abs2 = Number(newLink.AbsPos2);
+
+    let positionsToHighlight = [];
+
+    if (p1 === currentProt && p2 === currentProt) {
+      // Intra-protein crosslink: Highlight BOTH amino acids on this protein
+      positionsToHighlight = [abs1, abs2];
+    } else if (p1 === currentProt) {
+      // Inter-protein crosslink: Highlight AbsPos1
+      positionsToHighlight = [abs1];
+    } else if (p2 === currentProt) {
+      // Inter-protein crosslink: Highlight AbsPos2
+      positionsToHighlight = [abs2];
+    }
+
+    // If we have target residues on this protein, highlight them with bright green spheres/sticks
+    if (positionsToHighlight.length > 0) {
+      viewerInstance.addStyle(
+        { resi: positionsToHighlight },
+        {
+          stick: { color: '#2ecc71', radius: 0.3 },
+          sphere: { color: '#2ecc71', radius: 0.5 }
+        }
+      );
+    }
+
+    // if it's an intraprotein crosslink, draw a cylinder connecting the alpha carbons
+    if (p1 === currentProt && p2 === currentProt) {
+      const atoms1 = viewerInstance.selectedAtoms({ resi: abs1, atom: 'CA' });
+      const atoms2 = viewerInstance.selectedAtoms({ resi: abs2, atom: 'CA' });
+
+      if (atoms1.length > 0 && atoms2.length > 0) {
+        const coord1 = atoms1[0];
+        const coord2 = atoms2[0];
+
+        crosslinkShape = viewerInstance.addCylinder({
+          start: { x: coord1.x, y: coord1.y, z: coord1.z },
+          end: { x: coord2.x, y: coord2.y, z: coord2.z },
+          radius: 0.15,
+          color: '#2ecc71',
+          fromCap: true,
+          toCap: true
+        });
+      }
+    }
+  }
+
+  // Re-render the 3D viewer with the updated styles
+  viewerInstance.render();
 });
 
 async function load3DViewer(cifUrl) {

@@ -188,17 +188,48 @@ import { useDataStore } from '@/store/dataStore'
 
 const store = useDataStore();
 
-const { protein } = defineProps({
+const props = defineProps({
   protein: {
     type: Object,
     default: null
+  },
+  selectedCrosslink: {
+    type: Object,
+    required: false,
+    default: null
   }
-})
+});
+
+const highlightedResidues = computed(() => {
+  if (!props.selectedCrosslink || !props.protein) return new Set();
+
+  const currentProt = props.protein.uniprot_id.toUpperCase();
+  const p1 = props.selectedCrosslink.Protein1.toUpperCase();
+  const p2 = props.selectedCrosslink.Protein2.toUpperCase();
+  const abs1 = Number(props.selectedCrosslink.AbsPos1);
+  const abs2 = Number(props.selectedCrosslink.AbsPos2);
+
+  const positions = new Set();
+
+  if (p1 === currentProt && p2 === currentProt) {
+    // intraprotein: highlight both residues
+    positions.add(abs1);
+    positions.add(abs2);
+  } else if (p1 === currentProt) {
+    // interprotein (current -> other): highlight abs1
+    positions.add(abs1);
+  } else if (p2 === currentProt) {
+    // interprotein (other -> current): highlight abs2
+    positions.add(abs2);
+  }
+
+  return positions;
+});
 
 /* ---------- Crosslink coloration sur séquence ---------- */
 const crosslinkMap = computed(() => {
   const map = {}
-  const proteinId = protein?.uniprot_id
+  const proteinId = props.protein?.uniprot_id
   if (!proteinId || !store.csvData) return map
 
   store.csvData.forEach(entry => {
@@ -221,9 +252,9 @@ const crosslinkMap = computed(() => {
 
 const crosslinkStats = computed(() => {
   const stats = { crosslinkCount: 0, uniqueCount: 0, intraCount: 0, interCount: 0 }
-  if (!protein?.uniprot_id || !store.csvData || !store.fastaData) return stats
+  if (!props.protein?.uniprot_id || !store.csvData || !store.fastaData) return stats
 
-  const id = protein.uniprot_id.toUpperCase()
+  const id = props.protein.uniprot_id.toUpperCase()
   const fastaMap = new Map(store.fastaData.map(p => [p.uniprot_id.toUpperCase(), true]))
   const uniqueSet = new Set()
 
@@ -255,14 +286,19 @@ const crosslinkStats = computed(() => {
 })
 
 const styledSequence = computed(() => {
-  if (!protein?.sequence) return ''
-  return protein.sequence.split('').map((aa, idx) => {
+  if (!props.protein?.sequence) return ''
+  return props.protein.sequence.split('').map((aa, idx) => {
     const pos = idx + 1
     const types = crosslinkMap.value[pos]
     let style = ''
+
     if (types?.has('intra') && types?.has('inter'))      style = 'color: pink; font-weight: bold;'
     else if (types?.has('intra'))                        style = 'color: orange; font-weight: bold;'
     else if (types?.has('inter'))                        style = 'color: purple; font-weight: bold;'
+
+    if (highlightedResidues.value.has(pos)) {
+      style = 'color: #2ecc71; background-color: rgba(46, 204, 113, 0.25); font-weight: bold; border-radius: 2px;'
+    }
 
     if (pos % 10 === 0) {
       return `<span class="aa-with-pos"><span class="aa-number">${pos}</span><span style="${style}">${aa}</span></span>`
@@ -274,7 +310,7 @@ const styledSequence = computed(() => {
 
 /* ---------- Gene Ontology (GO) ---------- */
 const parsedGOTerms = computed(() => {
-  const raw = protein?.go_terms
+  const raw = props.protein?.go_terms
   if (!raw) return []
   if (Array.isArray(raw)) return raw.filter(x => x && x.id && x.term)
   if (typeof raw === 'string') {
@@ -292,7 +328,7 @@ const stringUrl = (sid) => `https://string-db.org/network/${encodeURIComponent(s
 
 // Subcellular locations: string JSON -> tableau
 const parsedSubLoc = computed(() => {
-  const raw = protein?.subcellular_locations;
+  const raw = props.protein?.subcellular_locations;
   if (!raw) return [];
   if (Array.isArray(raw)) return raw.filter(x => x && x.value);
   if (typeof raw === 'string') {
@@ -325,7 +361,7 @@ const groupedSubLoc = computed(() => {
 
 // STRING: "id;id;..." -> tableau
 const stringRefs = computed(() => {
-  const raw = protein?.string_refs;
+  const raw = props.protein?.string_refs;
   if (!raw) return [];
   if (Array.isArray(raw)) return raw.filter(Boolean);
   if (typeof raw === 'string') {
@@ -601,6 +637,13 @@ h3 { margin-top: 0; }
   white-space: nowrap;
   pointer-events: none;
   font-family: monospace;
+}
+
+:deep(.highlighted-residue) {
+  color: #2ecc71 !important;
+  background-color: rgba(46, 204, 113, 0.25) !important;
+  font-weight: bold;
+  border-radius: 2px;
 }
 
 </style>
