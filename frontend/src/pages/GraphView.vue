@@ -187,8 +187,30 @@ watch(selectedCrosslink, async (newLink) => {
     const abs2 = Number(newLink.AbsPos2);
 
     let positionsToHighlight = [];
+    let highlightColor = '#2ecc71';
 
     if (p1 === currentProt && p2 === currentProt) {
+
+      // calculate Euclidean distance for confirming crosslink satisfaction/violation
+      const atoms1 = viewerInstance.selectedAtoms({ resi: abs1, atom: 'CA' });
+      const atoms2 = viewerInstance.selectedAtoms({ resi: abs2, atom: 'CA' });
+
+      if (atoms1.length > 0 && atoms2.length > 0) {
+        const coord1 = atoms1[0];
+        const coord2 = atoms2[0];
+
+        const dx = coord2.x - coord1.x;
+        const dy = coord2.y - coord1.y;
+        const dz = coord2.z - coord1.z;
+        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+        console.log(`Crosslink distance (${abs1} - ${abs2}): ${distance.toFixed(2)} Å`);
+
+        if (distance > 35) {
+          highlightColor = '#e74c3c';
+        }
+      }
+
       // Intra-protein crosslink: Highlight BOTH amino acids on this protein
       positionsToHighlight = [abs1, abs2];
     } else if (p1 === currentProt) {
@@ -204,8 +226,8 @@ watch(selectedCrosslink, async (newLink) => {
       viewerInstance.addStyle(
         { resi: positionsToHighlight },
         {
-          stick: { color: '#2ecc71', radius: 0.3 },
-          sphere: { color: '#2ecc71', radius: 0.5 }
+          stick: { color: highlightColor, radius: 0.3 },
+          sphere: { color: highlightColor, radius: 0.5 }
         }
       );
     }
@@ -223,7 +245,7 @@ watch(selectedCrosslink, async (newLink) => {
           start: { x: coord1.x, y: coord1.y, z: coord1.z },
           end: { x: coord2.x, y: coord2.y, z: coord2.z },
           radius: 0.15,
-          color: '#2ecc71',
+          color: highlightColor,
           fromCap: true,
           toCap: true
         });
