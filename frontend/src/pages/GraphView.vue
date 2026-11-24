@@ -24,7 +24,7 @@
 
       <!-- 3. Right Sidebar Toggle Button -->
       <button class="toggle-sidebar-btn" @click="toggleRight">
-        {{ rightOpen ? 'Hide Table ▶' : '◀ Crosslinks Table' }}
+        {{ rightOpen ? 'Hide Table ▶' : '◀ Crosslink Info' }}
       </button>
     </div>
 
@@ -45,6 +45,7 @@
       <!-- Bottom Right Counter -->
       <div class="total-crosslinks-floating-bottom-right">
         Total crosslinks: {{ totalCrosslinkCount }}
+        <button class="export-btn" @click="exportSvg">Export Graph to SVG</button>
       </div>
     </div>
 
@@ -76,7 +77,7 @@
             <h4>Predicted Aligned Error (PAE)</h4>
             <img :src="`http://localhost:3001/${paeImageUrl}`" alt="PAE Plot" class="pae-preview" />
           </div>
-          <h4>Predicted 3D Structure</h4>
+          <h4>Predicted Monomer Structure</h4>
           <div ref="viewerContainer" style="height: 350px; position: relative; width: 100%;"></div>
 
           <div class="plddt-legend">
@@ -89,9 +90,13 @@
               <span class="mean-plddt">Mean pLDDT: {{ meanPlddt }}</span>
             </div>
           </div>
+          <DimerSection
+            :selected-crosslink="selectedCrosslink"
+            :selected-protein="selectedProtein"
+          />
         </div>
-        <p><small>PAE and 3D structure data are both taken from the <a href="https://alphafold.ebi.ac.uk/">AlphaFold DB</a>.</small></p>
-        <button class="export-btn" @click="exportSvg">Export Graph to SVG</button>
+        <p><small>PAE and monomer 3D structure data are both taken from the <a href="https://alphafold.ebi.ac.uk/">AlphaFold DB</a>.</small></p>
+        <p><small>Dimers are predicted locally using <a href="https://github.com/jwohlwend/boltz">Boltz</a>.</small></p>
       </div>
     </aside>
   </div>
@@ -105,6 +110,7 @@ import cytoscape from 'cytoscape';
 import coseBilkent from 'cytoscape-cose-bilkent';
 import CrosslinkTable from '@/components/CrosslinkTable.vue';
 import ProteinInfo from '@/components/ProteinInfo.vue'
+import DimerSection from '@/components/DimerSection.vue';
 import {fetchDatasetMeta} from "@/services/datasets.js";
 import cytoscapeSvg from 'cytoscape-svg';
 import { cross, lab } from 'd3';
@@ -1822,13 +1828,16 @@ watch(() => route.params.datasetId, async (newVal) => {
   right: 24px;
   z-index: 5;
   background: rgba(18, 18, 18, 0.85);
-  padding: 6px 14px;
+  padding: 10px 14px;
   border-radius: 6px;
   font-size: 0.85rem;
   color: #ccc;
   backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   pointer-events: none;
+  max-width: 150px;
+  text-align: center;
+  pointer-events: auto;
 }
 
 /* Sliding Sidebars Overlays */
@@ -1880,13 +1889,14 @@ watch(() => route.params.datasetId, async (newVal) => {
 
 .export-btn {
   width: 100%;
-  margin-top: 16px;
-  padding: 10px;
+  margin-top: 14px;
+  padding: 7px;
   background-color: #0074D9;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  pointer-events: auto;
 }
 .export-btn:hover {
   background-color: #005fa3;

@@ -13,6 +13,10 @@ export default defineConfig({
     host: true,
     port: 5173,
     proxy: {
+      '/api/boltz': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
       // Forward any request starting with /auth or /api to the backend
       '/auth': {
         target: 'http://localhost:3001',

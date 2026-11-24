@@ -151,3 +151,9 @@ dist
 # exclude generated PAE images
 /backend/public/*
 /backend/src/python/*.png
+
+# exclude .pyc
+*.pyc
+
+# exclude .cif files
+*.cif
